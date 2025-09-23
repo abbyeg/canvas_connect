@@ -1,0 +1,4 @@
+[env]
+RUST_LOG = "DEBUG"
+API_KEY = { value = "your_secret_key", force = true }
+PATH_TO_TOOL = { value = "bin/tool", relative = true } # Relative path
