@@ -1,13 +1,18 @@
 // Constants
-const TILE = 256;
+const TILE = 1024;
 const WS_URL = `ws://${location.host}/ws`;
 const BASE = document.getElementById('base');
 const OVERLAY = document.getElementById('overlay');
-const BCTX = BASE.getContext('2d');
-const OCTX = OVERLAY.getContext('2d');
-const DPR = devicePixelRatio || 1;
+const BCTX = BASE.getContext('2d'); // CanvasRenderingContext2D
+const OCTX = OVERLAY.getContext('2d'); // CanvasRenderingContext2D
+const DPR = devicePixelRatio || 1; 
 const TILES = new Map(); // "tx,ty" -> {version, bmp}
 const DIRTY = new Set(); // keys needing redraw
+const CANVAS_OPERATIONS = new Map([
+    [0, "source-over"], // default drawing
+    [1, "destination-out"], // eraser
+]);
+
 
 // Variables
 let view = { x: 0, y: 0, scale: 1 };
@@ -16,6 +21,16 @@ let q = [];
 let tool = 0;
 let ws;
 OCTX.fillStyle = '#fff';
+let draw_radius = 6;
+
+// Brush Params
+const BASE_RADIUS = 10; // px at pressure == 1
+const SPACING_PCT = 0.1; // 25% of diameter
+const HARDNESS = 0.6;
+const FLOW = 0.2; // per-dab alpha
+const OPACITY = 1.0;
+const PRESSURE_G = 0.5; // pressure curve gamma
+const BRUSH_CACHE = new Map(); // key `${r}|${HARDNESS}` -> OffScreenCanvas
 
 // handle canvas/screen resize
 function resize() {
@@ -42,17 +57,18 @@ function decodeKey(k) {
 }
 
 function worldToScreen(x, y) {
-    return [(x-view.x)*view.scale, (y-view.y)*view.scale];
+    return [(x-view.x) * view.scale, (y-view.y) * view.scale];
 }
 
 function screenToWorld(x, y) {
-    return [x/view.scale+view.x, y/view.scale+view.y];
+    return [x/view.scale + view.x, y/view.scale + view.y];
 }
 
 function render() {
     // draw base tiles
     BCTX.setTransform(1,0,0,1,0,0);
-    BCTX.clearRect(0,0,BASE.width,BASE.height);
+    BCTX.clearRect(0, 0, BASE.width, BASE.height);
+    
     for (const k of TILES.keys()) {
         const { bmp } = TILES.get(k);
         if (!bmp) continue;
@@ -67,30 +83,78 @@ function render() {
 
 /* -****- Painting -****- */
 
-OVERLAY.addEventListener('pointerdown', e => {/* -****- Painting -****- */
-
+OVERLAY.addEventListener('pointerdown', e => {
     OVERLAY.setPointerCapture(e.pointerId);
     down = true;
     push(e);
 });
+
 OVERLAY.addEventListener('pointermove', e => {
     if (down) {
         push(e);
     }
 });
+
 OVERLAY.addEventListener('pointerup', e => {
     down = false;
     flush();
+    prev = null; carry = 0;
 });
 
+let prev = null;
+let prev2 = null; // for curvature
+let carry = 0;
 function push(e) {
     const rect = OVERLAY.getBoundingClientRect();
-    const sx = (e.clientX - rect.left) * DPR;
-    const sy = (e.clientY - rect.top) * DPR;
-    const [x, y] = screenToWorld(sx, sy);
-    const r = 6; const a = 1.0;
-    q.push(x,y,r,a);
-    console.log(`pushed data to q: ${x},${y},${r},${a}`);
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of evs) {
+        const sx = (ev.clientX - rect.left) * DPR;
+        const sy = (ev.clientY - rect.top) * DPR;
+        const [x, y] = screenToWorld(sx, sy);
+        const pressure = Math.max(0.01, ev.pressure ?? 1);
+        emitDabs(x, y, pressure);
+    }
+}
+
+function emitDabs(x, y, pressure) {
+    const r = BASE_RADIUS * Math.pow(pressure, PRESSURE_G);
+    const stepBase = Math.max(0.5, SPACING_PCT * (2*r)); // clamp tiny steps
+    if (!prev) {
+        q.push(x, y, r, pressure);
+        prev = {x, y, r};
+        prev2 = null;
+        return;
+    }
+    let dx = x - prev.x;
+    let dy = y - prev.y;
+    let dist = Math.hypot(dx, dy);
+    if (dist === 0) return;
+
+    // estimate curve of last two segments
+    let curvature = 0;
+    if (prev2) {
+        const v1x = prev.x - prev2.x;
+        const v1y = prev.y - prev2.y;
+        const v2x = x - prev.x;
+        const v2y = y - prev.y;
+        const dot = (v1x*v2x + v1y*v2y) / ((Math.hypot(v1x,v1y)*Math.hypot(v2x,v2y))+1e-6);
+        const ang = Math.acos(Math.max(-1, Math.min(1, dot))); // 0..π
+        curvature = ang; // radians
+    }
+    
+    const step = stepBase * (1 - 0.6 * Math.min(1, curvature / 1.0)); // shrink step up to 60% on sharp turns
+    let ux = dx / dist;
+    let uy = dy / dist;
+    let t = carry;
+    while (t <= dist) {
+        const px = prev.x + ux * t;
+        const py = prev.y + uy * t;
+        q.push(px, py, r, 1);
+        t += step;
+    }
+    carry = t - dist;
+    prev2 = prev;
+    prev = {x, y, r};
 }
 
 function flush() {
@@ -107,30 +171,52 @@ function flush() {
 setInterval(() => {if (down) flush(); }, 12);
 
 // local echo
-function drawDabsLocal(ctx, buf, t) {
-    // console.log(`In drawDabsLocal`);
-    ctx.globalCompositeOperation = t === 1 ? "destination-out" : "source-over";
+function drawDabsLocal(ctx, buf, tool) {
+    ctx.globalCompositeOperation = CANVAS_OPERATIONS.get(tool) ?? "source-over";
+
     for (let i = 0; i < buf.length; i += 4) {
-        const [wx,wy,r,a] = buf.slice(i, i+4);
+        const [wx,wy,r,pressure] = buf.slice(i, i+4);
         const [sx, sy] = worldToScreen(wx, wy);
-        ctx.globalAlpha = a;
-        ctx.beginPath();
-        ctx.arc(sx,sy,r*view.scale,0, Math.PI*2);
-        ctx.fill();
+        const rr = Math.max(1, Math.round(r));
+        const tip = getBrush(rr, HARDNESS);
+        ctx.globalAlpha = Math.min(1, FLOW * pressure); // flow per-dab
+        const s = (rr*2)*view.scale;
+        ctx.arc(sx, sy, r*view.scale, 0, Math.PI*2);
+        ctx.drawImage(tip, sx - s/2, sy - s/2, s, s);
     }
-    ctx.globalAlpha=1;
-    ctx.globalCompositeOperation = "source-over";
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = CANVAS_OPERATIONS.get(tool);
+}
+
+function getBrush(r, hardness) {
+    const key = `${r}|${hardness}`;
+    let tip = BRUSH_CACHE.get(key);
+    if (tip) return tip;
+
+    const d = r*2;
+    const oc = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(d, d) : document.createElement('canvas');
+    oc.width = d;
+    oc.height = d;
+    const ctx = oc.getContext('2d');
+    
+    const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+    const h = Math.max(0, Math.min(1, hardness));
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(h, 'rgba(0,0,0,1)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, d, d);
+    BRUSH_CACHE.set(key, oc);
+    return oc;
 }
 
 /* -****- WebSocket -****- */
 function connect(){
     ws = new WebSocket(WS_URL);
-    console.log("Websocket connection");
     ws.onopen = () => {
         // send known versions
         const known = {};
-        console.log("onopen event");
-        console.log(JSON.stringify(ws));
         for (const [k,v] of TILES) known[k] = v.version || 0;
         ws.send(JSON.stringify({type: "join", room_id: "default", known }));
     };
@@ -138,6 +224,7 @@ function connect(){
     ws.onmessage = async (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === "tile_patch") {
+            console.log("PATCH RECEIVED");
             const k = key(msg.tx, msg.ty);
             // decode PNG -> image bitmap
             const blob = await (await fetch("data:image/png;base64,"+msg.png_base64)).blob();
@@ -150,12 +237,10 @@ function connect(){
             }
             return;
         }
-        if (msg.type === "dabs") {
-            console.log("drawing dabs local");
+        if (msg.type === "dabs") { 
             drawDabsLocal(OCTX, msg.dabs, msg.tool);
         }
         if (msg.type === "debug") {
-            console.log("writing debug message");
             document.getElementById("connection-port").textContent = String(msg.port);
             return;
         }
@@ -169,31 +254,3 @@ function connect(){
 }
 console.log("websocket connect soon?");
 connect();
-
-/* -****- MISC -****- */
-
-// const socket = new WebSocket('ws://localhost:3000/ws');
-
-// socket.addEventListener('open', function (event) {
-//     socket.send('Hello Server!');
-// });
-
-// socket.addEventListener('message', function (event) {
-//     console.log('Message from server ', event.data);
-// });
-
-
-// setTimeout(() => {
-//     const obj = { hello: "world" };
-//     const blob = new Blob([JSON.stringify(obj, null, 2)], {
-//       type: "application/json",
-//     });
-//     console.log("Sending blob over websocket");
-//     socket.send(blob);
-// }, 1000);
-
-// setTimeout(() => {
-//     socket.send('About done here...');
-//     console.log("Sending close over websocket");
-//     socket.close(3000, "Crash and Burn!");
-// }, 3000);

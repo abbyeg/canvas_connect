@@ -3,14 +3,22 @@
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-  <div id="wrap">
-    <div id="connect-info">
-      <ul>
-        <li>Connection: <span id="connection-port"></span></li>
-      </ul>
+  <div id="container">
+    <div id="controls">
+      <div id="debug-info">
+        <ul>
+          <li>Connection: <span id="connection-port"></span></li>
+        </ul>
+      </div>
+      <div id="toolbar">
+        <label for="stroke">Stroke</label><input id="stroke" name="stroke" type="color">
+        <label for="lineWidth">Line Width</label><input id="lineWidth" name="lineWidth" type="number" value="5">
+      </div>
     </div>
-    <canvas id="base"></canvas>
-    <canvas id="overlay"></canvas> <!-- local echo -->
+    <div id="drawing-canvas">
+      <canvas id="base"></canvas>
+      <canvas id="overlay"></canvas> <!-- local echo -->
+    </div>
   </div>
 </body>
 
