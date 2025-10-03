@@ -4,18 +4,27 @@ use dashmap::DashMap;
 use uuid::Uuid;
 use std::sync::Arc;
 
+use crate::model::Tile;
+
 #[derive(Debug)]
 pub struct Room {
     pub id: Uuid,
     pub tx: broadcast::Sender<String>, // TODO: convert to bytes
-    pub strokes: RwLock<Vec<Stroke>>,
+    // pub strokes: RwLock<Vec<Stroke>>,
     pub version: RwLock<u64>,
+    pub tile: RwLock<Tile>,
 }
 
 impl Room {
     pub fn new(id: Uuid) -> Self {
         let (tx, _rx) = broadcast::channel(1024);
-        Self { id, tx, strokes: RwLock::new(Vec::new()), version: RwLock::new(0) }
+        Self { 
+            id, 
+            tx, 
+            /*strokes: RwLock::new(Vec::new()),*/ 
+            version: RwLock::new(0),
+            tile: RwLock::new(Tile::new(1024,1024)),
+        }
     }
 }
 
