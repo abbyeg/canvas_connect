@@ -23,7 +23,7 @@ impl Room {
             tx, 
             /*strokes: RwLock::new(Vec::new()),*/ 
             version: RwLock::new(0),
-            tile: RwLock::new(Tile::new(1024,1024)),
+            tile: RwLock::new(Tile::new(800,800)),
         }
     }
 }

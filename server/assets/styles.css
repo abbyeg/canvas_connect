@@ -58,4 +58,6 @@ canvas {
   image-rendering: pixelated;
   background-color: white;
   border: 1px solid black;
+  width: 1024px;
+  height: 800px;
 }

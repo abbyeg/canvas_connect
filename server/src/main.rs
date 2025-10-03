@@ -43,7 +43,6 @@ async fn main() {
 
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
     
-    // let tile: Tile = Tile::new(1024, 1024);
     let app = Router::new()
         .fallback_service(ServeDir::new(assets_dir).append_index_html_on_directories(true))
         .route("/ws", any(ws_handler))

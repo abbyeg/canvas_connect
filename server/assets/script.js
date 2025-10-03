@@ -1,5 +1,5 @@
 // Constants
-const TILE = 1024;
+const TILE = 800;
 const WS_URL = `ws://${location.host}/ws`;
 const BASE = document.getElementById('base');
 const OVERLAY = document.getElementById('overlay');
@@ -37,8 +37,10 @@ const BRUSH_CACHE = new Map(); // key `${r}|${HARDNESS}` -> OffScreenCanvas
 
 // handle canvas/screen resize
 function resize() {
-    const w = Math.floor(window.innerWidth * DPR);
-    const h = Math.floor(window.innerHeight * DPR);
+    const hard_width = 800; // window.innerWidth
+    const hard_height = 800; // window.innerHeight
+    const w = Math.floor(hard_width * DPR);
+    const h = Math.floor(hard_width * DPR);
     for (const c of [BASE, OVERLAY]) { 
         c.width = w;
         c.height = h;
@@ -73,6 +75,7 @@ function render() {
     BCTX.clearRect(0, 0, BASE.width, BASE.height);
     
     for (const k of TILES.keys()) {
+        console.log(`rendering key ${k} of tile keys`);
         const { bmp } = TILES.get(k);
         if (!bmp) continue;
         const [tx, ty] = decodeKey(k);
@@ -237,6 +240,8 @@ function connect(){
             // decode PNG -> image bitmap
             const blob = await (await fetch("data:image/png;base64,"+msg.png_base64)).blob();
             const bmp = await createImageBitmap(blob);
+            console.log(`tile patch bitmap:`);
+            console.log(bmp);
             const cur = TILES.get(k);
             if (!cur || msg.version > cur.version) {
                 TILES.set(k, { version: msg.version, bmp });
