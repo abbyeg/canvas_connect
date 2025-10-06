@@ -8,17 +8,25 @@
       <div id="debug-info">
         <ul>
           <li>Connection: <span id="connection-port"></span></li>
-          <li>Room ID: <span id="room-id"></span></li>
+          <li>Room ID:
+            <input type="text" id="room-id">
+            <button onclick="copyToClipboard('room-id')">Copy Text</button>
+          </li>
+          <p id="message"></p>
         </ul>
       </div>
       <div id="toolbar">
         <label for="stroke">Stroke</label><input id="stroke" name="stroke" type="color">
         <label for="lineWidth">Line Width</label><input id="lineWidth" name="lineWidth" type="number" value="5">
+        <input id="brush" name="brush" type="button" value="Brush" onclick="setMode(0)">
+        <input id="eraser" name="eraser" type="button" value="Eraser" onclick="setMode(1)">
       </div>
     </div>
     <div id="drawing-canvas">
-      <canvas id="base"></canvas>
-      <canvas id="overlay"></canvas> <!-- local echo -->
+      <div id="stage">
+        <canvas id="base"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
     </div>
   </div>
 </body>

@@ -1,46 +1,40 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use tiny_skia::Pixmap;
+use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Pt { x: f32, y: f32 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Stroke {
-    pub pts: Vec<Pt>,
-    pub width: f32,
-    pub rgba: [u8; 4],
-    pub layer: u16,
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DabsPayload {
+    pub tool: u8,
+    pub dabs: Vec<f32>,
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag="type")]
+#[serde(tag = "type")]
 pub enum ClientMsg {
-    #[serde(rename="join")]
-    Join { 
-        room_id: String, 
-        #[serde(default)] 
+    #[serde(rename = "join")]
+    Join {
+        #[serde(default)]
         since: u64, // last seen seq
     },
-    #[serde(rename="dabs")]
-    Dabs { tool: u8, dabs: Vec<f32> }, // TODO: Might not want to have same data for client/server
-    // #[serde(rename="strokemsg")]
-    // StrokeMsg { stroke: Stroke, seq: u64 }, // seq provides ordering per client
-    // #[serde(rename="presence")]
-    // Presence { x: f32, y: f32, tool: u8, hue: u16 },
-    // #[serde(rename="ack")]
-    // Ack { upto: u64 },
-    // #[serde(rename="snapshotreq")]
-    // SnapshotReq // TODO: Add snapshots
+    #[serde(rename = "dabs")]
+    Dabs(DabsPayload),
 }
 
 #[derive(Serialize, Clone)]
-#[serde(tag="type")]
+#[serde(tag = "type")]
 pub enum ServerMsg {
-    #[serde(rename="debug")]
+    #[serde(rename = "debug")]
     Debug { port: u16, room_id: Uuid },
-    #[serde(rename="tile_patch")]
-    TilePatch { version: u64, png_base64: String},
+    #[serde(rename = "tile_patch")]
+    TilePatch {
+        tx: i32,
+        ty: i32,
+        version: u64,
+        png_base64: String,
+    },
+    #[serde(rename = "dabs")]
+    Dabs(DabsPayload),
 }
 
 #[derive(Debug)]
@@ -53,7 +47,7 @@ impl Tile {
     pub fn new(w: u32, h: u32) -> Self {
         Self {
             pix: Pixmap::new(w, h).unwrap(),
-            version: 0
+            version: 0,
         }
     }
 }

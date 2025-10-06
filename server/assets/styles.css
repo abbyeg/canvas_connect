@@ -1,31 +1,42 @@
 body {
   margin: 0;
-  padding: 0;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
   color: black;
+  background-color: black;
+  font-size: small;
+}
+
+ul {
+  padding-left: 10px;
 }
 
 #container {
-  position: relative;
-  z-index: 0;
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
   display: flex;
 }
 
 #controls {
+  width: 100px;
+  position: relative; 
+  background-color: gray;
+  height: 100vh;
+}
+
+#drawing-canvas {
+  flex: 1;
   display: flex;
+  justify-content: center;
+  align-items: center;
   position: relative;
-  height: 100%;
 }
 
 #debug-info {
   flex-direction: column;
   z-index: 2;
-  position: absolute;
-  top: 100px;
-  left: 100px;
+  /* position: absolute; */
+  padding: 10px;
   top: 0;
   left: 0;
   background-color: gray;
@@ -49,15 +60,27 @@ body {
 
 #drawing-canvas {
   width: 100%;
+  position: relative;
+}
+
+#base, #overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: transparent;
+}
+
+#base { 
+  background: #fff; 
+}
+
+#stage {                        /* fixed canvas box */
+  position: relative;
+  width: 800px;
+  height: 800px;
 }
 
 canvas {
-  position: absolute;
-  left: 0;
-  top: 0;
   image-rendering: pixelated;
-  background-color: white;
   border: 1px solid black;
-  width: 1024px;
-  height: 800px;
 }

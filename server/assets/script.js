@@ -20,14 +20,14 @@ let down = false;
 let q = [];
 let tool = 0;
 let ws;
-OCTX.fillStyle = '#fff';
 let draw_radius = 6;
 const query_string = window.location.search;
 const urlParams = new URLSearchParams(query_string);
-const room_id = urlParams.get('room') || '';
+const room_id = urlParams.get('r') || '';
+// const room_id = "a82b17b7-0c98-4aae-afea-8a481af601b3";
 
 // Brush Params
-const BASE_RADIUS = 10; // px at pressure == 1
+const BASE_RADIUS = 5; // px at pressure == 1
 const SPACING_PCT = 0.1; // 25% of diameter
 const HARDNESS = 0.6;
 const FLOW = 0.2; // per-dab alpha
@@ -35,22 +35,51 @@ const OPACITY = 1.0;
 const PRESSURE_G = 0.5; // pressure curve gamma
 const BRUSH_CACHE = new Map(); // key `${r}|${HARDNESS}` -> OffScreenCanvas
 
-// handle canvas/screen resize
-function resize() {
-    const hard_width = 800; // window.innerWidth
-    const hard_height = 800; // window.innerHeight
-    const w = Math.floor(hard_width * DPR);
-    const h = Math.floor(hard_width * DPR);
-    for (const c of [BASE, OVERLAY]) { 
-        c.width = w;
-        c.height = h;
-        c.style.width = (w/DPR)+'px';
-        c.style.height = (h/DPR)+'px';
-    }
-    requestAnimationFrame(render);
+
+async function resize() {
+  const newDPR = window.devicePixelRatio || 1;
+  if (newDPR === DPR) return;          // no backing-store reset
+
+  DPR = newDPR;
+  await resizeBackingStore();
 }
+
+async function resizeBackingStore() {
+    const snap = await createImageBitmap(BASE); // preserve pixels
+
+    const cssW = 800, cssH = 800;
+    for (const c of [BASE, OVERLAY]) {
+        c.width  = Math.floor(cssW * DPR);
+        c.height = Math.floor(cssH * DPR);
+        c.style.width  = cssW + 'px';
+        c.style.height = cssH + 'px';
+    }
+    BCTX.setTransform(DPR,0,0,DPR,0,0);
+    BCTX.drawImage(snap, 0, 0, cssW, cssH); // restore
+    OCTX.setTransform(DPR,0,0,DPR,0,0);
+    OCTX.clearRect(0,0,OVERLAY.width,OVERLAY.height); // overlay is ephemeral
+}
+
 addEventListener('resize', resize);
-resize();
+resizeBackingStore();
+
+function copyToClipboard(id) {
+    const copyText = document.getElementById(id);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+
+    navigator.clipboard.writeText(copyText.value)
+        .then(() => {
+            document.getElementById("message").innerText = "Text copied to clipboard!";
+            setTimeout(() => {
+                document.getElementById("message").innerText = "";
+            }, 2000); // Clear message after 2 seconds
+        })
+        .catch(err => {
+            console.error('Failed to copy text: ', err);
+            document.getElementById("message").innerText = "Failed to copy text.";
+        });
+}
 
 function key(tx, ty) {
     return `${tx},${ty}`;
@@ -70,21 +99,25 @@ function screenToWorld(x, y) {
 }
 
 function render() {
-    // draw base tiles
     BCTX.setTransform(1,0,0,1,0,0);
     BCTX.clearRect(0, 0, BASE.width, BASE.height);
-    
+    BCTX.setTransform(DPR,0,0,DPR,0,0);
+
     for (const k of TILES.keys()) {
-        console.log(`rendering key ${k} of tile keys`);
         const { bmp } = TILES.get(k);
         if (!bmp) continue;
         const [tx, ty] = decodeKey(k);
-        const [sx, sy] = worldToScreen(tx*TILE, ty*TILE);
-        const s = TILE*view.scale;
+        const [sx, sy] = worldToScreen(tx * TILE, ty * TILE); // TILE = 800
+        const s = TILE * view.scale;
         BCTX.drawImage(bmp, sx, sy, s, s);
     }
-    // overlay is drawn incrementally by local echo
     DIRTY.clear();
+}
+
+function setMode(drawMode) {
+    tool = drawMode;
+    BCTX.globalCompositeOperation = CANVAS_OPERATIONS.get(tool) ?? "source-over"; 
+    OCTX.globalCompositeOperation = CANVAS_OPERATIONS.get(tool) ?? "source-over";  
 }
 
 /* -****- Painting -****- */
@@ -108,14 +141,15 @@ OVERLAY.addEventListener('pointerup', e => {
 });
 
 let prev = null;
-let prev2 = null; // for curvature
+let prev2 = null;
 let carry = 0;
+
 function push(e) {
     const rect = OVERLAY.getBoundingClientRect();
     const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
     for (const ev of evs) {
-        const sx = (ev.clientX - rect.left) * DPR;
-        const sy = (ev.clientY - rect.top) * DPR;
+        const sx = (ev.clientX - rect.left);
+        const sy = (ev.clientY - rect.top);
         const [x, y] = screenToWorld(sx, sy);
         const pressure = Math.max(0.01, ev.pressure ?? 1);
         emitDabs(x, y, pressure);
@@ -136,7 +170,6 @@ function emitDabs(x, y, pressure) {
     let dist = Math.hypot(dx, dy);
     if (dist === 0) return;
 
-    // estimate curve of last two segments
     let curvature = 0;
     if (prev2) {
         const v1x = prev.x - prev2.x;
@@ -144,11 +177,11 @@ function emitDabs(x, y, pressure) {
         const v2x = x - prev.x;
         const v2y = y - prev.y;
         const dot = (v1x*v2x + v1y*v2y) / ((Math.hypot(v1x,v1y)*Math.hypot(v2x,v2y))+1e-6);
-        const ang = Math.acos(Math.max(-1, Math.min(1, dot))); // 0..π
-        curvature = ang; // radians
+        const ang = Math.acos(Math.max(-1, Math.min(1, dot)));
+        curvature = ang;
     }
     
-    const step = stepBase * (1 - 0.6 * Math.min(1, curvature / 1.0)); // shrink step up to 60% on sharp turns
+    const step = stepBase * (1 - 0.6 * Math.min(1, curvature / 1.0));
     let ux = dx / dist;
     let uy = dy / dist;
     let t = carry;
@@ -217,33 +250,48 @@ function getBrush(r, hardness) {
     return oc;
 }
 
+function b64ToU8(b64) {
+  const bin = atob(b64);
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8;
+}
+
 /* -****- WebSocket -****- */
 function connect(){
-    if (room_id !== '') {
-        ws = new WebSocket(WS_URL + "/" + room_id);
+    if (room_id === "") {
+       ws = new WebSocket(WS_URL + room_id); 
     } else {
-        ws = new WebSocket(WS_URL);
+        ws = new WebSocket(`${WS_URL}/${room_id}`);
     }
-    
     ws.onopen = () => {
-        // send known versions
         const known = {};
         for (const [k,v] of TILES) known[k] = v.version || 0;
-        ws.send(JSON.stringify({type: "join", room_id: "default", known }));
+        ws.send(JSON.stringify({type: "join", known }));
     };
 
     ws.onmessage = async (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === "tile_patch") {
             console.log("PATCH RECEIVED");
+
             const k = key(msg.tx, msg.ty);
-            // decode PNG -> image bitmap
-            const blob = await (await fetch("data:image/png;base64,"+msg.png_base64)).blob();
-            const bmp = await createImageBitmap(blob);
-            console.log(`tile patch bitmap:`);
-            console.log(bmp);
+            const u8 = b64ToU8(msg.png_base64);
+            const blob = new Blob([u8], { type: "image/png" });
+            
+            let bmp;
+            try {
+                bmp = await createImageBitmap(blob);
+            } catch {
+                const img = new Image();
+                img.src = URL.createObjectURL(blob);
+                await img.decode();
+                bmp = img;
+            }
+
             const cur = TILES.get(k);
             if (!cur || msg.version > cur.version) {
+                console.log(`replacing tile with patch`);
                 TILES.set(k, { version: msg.version, bmp });
                 DIRTY.add(k);
                 requestAnimationFrame(render);
@@ -255,13 +303,13 @@ function connect(){
         }
         if (msg.type === "debug") {
             document.getElementById("connection-port").textContent = String(msg.port);
-            document.getElementById("room-id").textContent = String(msg.room_id);
+            document.getElementById("room-id").value = String(msg.room_id);
             return;
         }
     };
     ws.onerror = async (e) => {
       console.error(`WebSocket error: ${JSON.stringify(e)}`);
-      // Implement error handling logic here, e.g., display a message to the user, attempt reconnection.
+      // TODO: Implement error handling logic here, display error to user or attempt reconnection
     };
 
     ws.onclose = () => setTimeout(connect, 1000);
