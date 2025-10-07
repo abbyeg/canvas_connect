@@ -185,8 +185,9 @@ fn encode_png(pix_data: &[u8], tile_width: u32, tile_height: u32) -> anyhow::Res
     enc.set_color(png::ColorType::Rgba);
     enc.set_depth(png::BitDepth::Eight);
     enc.set_compression(png::Compression::Fast);
-    enc.set_filter(png::Filter::NoFilter);
+    enc.set_filter(png::Filter::NoFilter); 
     let mut writer = enc.write_header().unwrap();
+
     writer.write_image_data(pix_data)?;
     writer.finish()?;
     Ok(out)

@@ -5,3 +5,5 @@ server/debug
 **/*.rs.bk
 
 .vscode/*
+
+.DS_Store
