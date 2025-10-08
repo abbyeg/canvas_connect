@@ -1,0 +1,141 @@
+:root {
+  --bg: #f7f3dc;
+  --ink: #1e1b16;
+  --accent: #ff4da3;
+  --cyan: #39d6e1;
+  --sun: #ffd44a;
+  --leaf: #9bd96b;
+  --card: #fff8d8;
+  --radius: 16px;
+  --shadow: 3px 3px 0 var(--ink);
+  --paper: .06;
+  --gap: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,body {
+  min-height: 100%;
+  height: auto;
+  margin: 0;
+}
+
+body {
+  font: 16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(255,77,163,.08), transparent 60%),
+    radial-gradient(800px 400px at 110% 0%, rgba(57,214,225,.10), transparent 60%),
+    var(--bg);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--paper);
+  background:
+    radial-gradient(circle at 20% 25%, rgba(0,0,0,.05) 0 1px, transparent 1.2px) 0 0/6px 6px,
+    radial-gradient(circle at 70% 60%, rgba(0,0,0,.04) 0 1px, transparent 1.2px) 3px 3px/8px 8px,
+    linear-gradient(180deg, rgba(255,255,255,.22), transparent 60%);
+  mix-blend-mode: multiply;
+}
+
+#container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%; 
+}
+
+.top {
+  position:sticky;
+  top:0;
+  z-index:40;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  height:58px;
+  padding:0 var(--gap);
+  background:#fff1b6;
+  border-bottom:2px solid var(--ink);
+  box-shadow:0 3px 0 var(--ink);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.brand .thin {
+  font-weight: 600;
+  opacity: .7;
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+.card {
+  padding: 16px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.grid {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+}
+
+.pill {
+  padding: 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fffbe1;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.not-implemented {
+  opacity: 30%; 
+}
+
+.note {
+  opacity:.8;
+}
+
+.media {
+  margin:0;
+}
+
+.media img, .media iframe {
+  max-width:100%;
+  height:auto;
+  display:block;
+  border-radius:12px;
+  border:2px solid var(--ink);
+  box-shadow:2px 2px 0 var(--ink);
+  background:#fff;
+}
+
+.foot {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px var(--gap);
+  border-top: 2px solid var(--ink);
+  background: #fff0b0;
+}
+
