@@ -1,33 +1,81 @@
 <html>
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SketchPool</title>
+  <meta name="description" content="SketchPool - Synchronous, Realtime Drawing." />
   <link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="logo.png">
 </head>
 <body>
-  <div id="container">
-    <div id="controls">
-      <div id="debug-info">
-        <ul>
-          <li>Connection: <span id="connection-port"></span></li>
-          <li>Room ID:
-            <input type="text" id="room-id">
-            <button onclick="copyToClipboard('room-id')">Copy Text</button>
-          </li>
-          <p id="message"></p>
-        </ul>
-      </div>
-      <div id="toolbar">
-        <label for="stroke">Stroke</label><input id="stroke" name="stroke" type="color">
-        <label for="lineWidth">Line Width</label><input id="lineWidth" name="lineWidth" type="number" value="5">
-        <input id="brush" name="brush" type="button" value="Brush" onclick="setMode(0)">
-        <input id="eraser" name="eraser" type="button" value="Eraser" onclick="setMode(1)">
-      </div>
-    </div>
-    <div id="drawing-canvas">
-      <div id="stage">
-        <canvas id="base"></canvas>
-        <canvas id="overlay"></canvas>
-      </div>
-    </div>
+  <div class="app" role="application" aria-label="Sketchpool UI">
+    <header>
+      <div class="row" aria-label="Top bar">
+        <div class="brand"><img id="logo" src="logo.png" height="20px"/><span>SketchPool</span></div>
+        
+        <div class="seg" role="group" aria-label="File">
+          <button id="btnNew" title="New canvas (N)">New</button>
+          <button id="btnExport" title="Export PNG (E)">Export</button>
+          <button id="btnImport" class="cyan" title="Import image"><input id="fileIn" type="file" accept="image/*" class="sr-only">Import</button>
+        </div>
+        
+        <div class="grow"></div>
+        <div class="chip" title="Room"><span id="roomChip">ROOM: —</span></div>
+        <div class="chip" title="Me"><span class="avatar"></span><span id="user">Anonymous</span></div>
+    </header>
+
+    <main class="main">
+      <nav class="toolbar" aria-label="Tools">
+        <button class="tool" id="t_brush" aria-pressed="true" title="Brush (B)" data-tool="brush" aria-label="Brush">
+          <img src="pencil-edit-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+        </button>
+        <button class="tool" id="t_eraser" aria-pressed="false" title="Eraser (E)" data-tool="eraser" aria-label="Eraser" onclick="setMode(1)"">
+         <img src="eraser-svgrepo-com.svg"  width="22" height="22" /> 
+        </button>
+        <button class="tool" id="t_hand" aria-pressed="false" title="Hand/Pan (Space)" data-tool="hand" aria-label="Hand">
+          <img src="pan-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+        </button>
+        <button class="tool" id="t_zoom" aria-pressed="false" title="Zoom (Z)" data-tool="zoom" aria-label="Zoom">
+          <img src="magnifying-glass-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+        </button>
+        <button class="tool" id="t_undo" aria-pressed="false" title="Undo (Ctrl/Cmd+Z)" data-tool="undo" aria-label="Undo">
+          <img src="undo-svgrepo-com.svg" width="22" height="22" onclick="setMode(0)"/>
+        </button>
+        <button class="tool" id="t_clear" aria-pressed="false" title="Clear (Shift+N)" data-tool="clear" aria-label="Clear">
+          <img src="clear-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+        </button>
+      </nav>
+      
+      <section class="stage-wrap" aria-label="Canvas area">
+        <div id="workspace" class="workspace" role="region" aria-label="Workspace" tabindex="0">
+          <canvas id="base" class="canvas" aria-label="Base canvas"></canvas>
+          <canvas id="overlay" class="canvas" aria-label="Overlay canvas"></canvas>
+        </div>
+      </section>
+
+      <aside>
+        <div class="panel">
+          <h3>Brush</h3>
+          <div class="rowx"><label style="min-width:72px">Size</label><input id="size" class="slider" type="range" min="1" max="64" value="6"/></div>
+        </div>
+        <div class="panel">
+          <h3>Color</h3>
+          <div class="rowx" style="flex-wrap:wrap; gap:8px" id="palette"></div>
+          <div style="margin-top:8px" class="rowx"><input id="color" type="color" class="input" value="#222222" /></div>
+        </div>
+      </aside>
+
+    </main>
+
+    <footer>
+      <span id="coord">x:0 y:0</span>
+      <span id="zoomLabel" class="pill">100%</span>
+      <span id="status" class="pill warn">offline demo</span>
+      <span id="connectionPort" class="pill">-</span>
+      <span class="grow"></span>
+      <span class="pill">Brush <span id="brushLabel">6px #222</span></span>
+    </footer>
+
   </div>
 </body>
 

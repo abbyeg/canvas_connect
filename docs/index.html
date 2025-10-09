@@ -11,24 +11,28 @@
     <div id="container">
       <header class="top">
         <div class="brand"><span>SketchPool</span><span class="thin">(WIP) Docs</span></div>
+        <div class="grow"></div>
+        <div class="pill"><a href="https://github.com/abbyeg/sketchpool">Github</a></div>
       </header>
       <main class="page" id="content" tabindex="-1">
         <section data-route="overview" class="card">
           <h1>Overview</h1>
-          <p><b>Sketchpool</b> is a networked drawing canvas. It provides realtime drawing synchronization in small rooms to build artistic community and is currently in the very early stages of development.</p>
-          <p>With that in mind, the following content can be interpreted as the initial MVP roadmap for this project. It should help you get an idea of the basic features that will be implemented.</p>
+          <p><b>Sketchpool</b> is a free, open-source networked drawing canvas. It provides realtime drawing synchronization in small rooms to build artistic community and is currently in the very early stages of development.</p>
+          <p>The following content is the MVP roadmap for this project. It should help you get an idea of the basic features that will be implemented.</p>
           <h2>Features</h2>
           <div class="grid">
-            <div class="pill">Websocket: Realtime Synchronous Drawing</div>
-            <div class="pill not-implemented">S3 Buckets: Canvas Snapshots</div>
+            <div class="pill">Websocket: Realtime Drawing Sync</div>
             <div class="pill not-implemented">PostgreSQL: API Persistence</div>
+            <div class="pill not-implemented">JWT: Authorization</div>
+            <div class="pill not-implemented">S3 Buckets: Canvas Snapshots</div>
             <div class="pill not-implemented">IndexedDB: Local Cache</div>
           </div>
         </section>
         <section data-route="architecture" class="card">
           <h1>Architecture</h1>
           <p>Single-room canvas document in memory with append-only logs. Client renders on a fixed-size canvas and scales for display.</p>
-          <div>
+          <p>Connections are peer-to-peer and the software can be self-hosted.</p>
+          <div style="overflow: auto;">
             <img src="assets/Sketchpool MVP Architecture.png" width="800" height="450"/>
             <!-- <iframe style="border: 1px solid rgba(0, 0, 0, 0.1);" width="800" height="450" src="https://embed.figma.com/board/vUvC2hRvSkakOFmsxuqLAV/Sketchpool-MVP-Architecture?node-id=0-1&embed-host=share" allowfullscreen></iframe> -->
           </div>

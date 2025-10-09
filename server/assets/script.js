@@ -1,5 +1,7 @@
 // Constants
 const TILE = 800;
+const TILE_WIDTH = 800;
+const TILE_HEIGHT = 800;
 const WS_URL = `ws://${location.host}/ws`;
 const BASE = document.getElementById('base');
 const OVERLAY = document.getElementById('overlay');
@@ -12,20 +14,23 @@ const CANVAS_OPERATIONS = new Map([
     [0, "source-over"], // default drawing
     [1, "destination-out"], // eraser
 ]);
-
+const STAGE_WRAP = document.querySelector('.stage-wrap');
+const COORD = document.getElementById('coord');
+const WORKSPACE = document.getElementById('workspace');
+const COLORS = ['#1e1b16','#ff4da3','#39d6e1','#ffd44a','#9bd96b','#8a5be0','#ff7b3a','#6e6243','#cccccc'];
+const PALETTE = document.getElementById('palette');
+const BRUSH_LABEL = document.getElementById('brushLabel');
 
 // Variables
-let view = { x: 0, y: 0, scale: 1 };
+let view = { x: 0, y: 0, scale: 1, tool: 0, color: '#222222', size: 6 };
 let down = false;
 let q = [];
-let tool = 0;
 let ws;
 let draw_radius = 6;
 const query_string = window.location.search;
 const urlParams = new URLSearchParams(query_string);
 const room_id = urlParams.get('r') || '';
 // const room_id = "a82b17b7-0c98-4aae-afea-8a481af601b3";
-
 // Brush Params
 const BASE_RADIUS = 5; // px at pressure == 1
 const SPACING_PCT = 0.1; // 25% of diameter
@@ -34,6 +39,43 @@ const FLOW = 0.2; // per-dab alpha
 const OPACITY = 1.0;
 const PRESSURE_G = 0.5; // pressure curve gamma
 const BRUSH_CACHE = new Map(); // key `${r}|${HARDNESS}` -> OffScreenCanvas
+
+function clamp(z, a, b) {
+    return Math.max(a, Math.min(b, z));
+}
+
+function getPos(evt) {
+    const rect = WORKSPACE.getBoundingClientRect();
+    const x = (evt.clientX - rect.left)/view.scale;
+    const y = (evt.clientY - rect.top)/view.scale;
+    return {x: clamp(x, 0, TILE_WIDTH), y: clamp(y, 0, TILE_HEIGHT)};
+}
+
+function onPointerMove(e) {
+    const p = getPos(e);
+    COORD.textContent = `x:${Math.round(p.x)} y:${Math.round(p.y)}`;
+}
+
+OVERLAY.addEventListener('mousemove', onPointerMove);
+
+function updateBrushLabel() {
+    const txt = `${view.size}px · ${view.color}`;
+    BRUSH_LABEL.textContent = txt;
+}
+
+COLORS.forEach(hex => {
+    const sw = document.createElement('button');
+    sw.className='color-swatch';
+    sw.style.background = hex;
+    sw.title = hex;
+    sw.setAttribute('aria-label', 'color '+hex);
+    sw.onclick = () => {
+        view.color = hex;
+        color.value = hex;
+        updateBrushLabel();
+    };
+    PALETTE?.appendChild(sw); 
+});
 
 
 async function resize() {
@@ -115,9 +157,9 @@ function render() {
 }
 
 function setMode(drawMode) {
-    tool = drawMode;
-    BCTX.globalCompositeOperation = CANVAS_OPERATIONS.get(tool) ?? "source-over"; 
-    OCTX.globalCompositeOperation = CANVAS_OPERATIONS.get(tool) ?? "source-over";  
+    view.tool = drawMode;
+    BCTX.globalCompositeOperation = CANVAS_OPERATIONS.get(view.tool) ?? "source-over"; 
+    OCTX.globalCompositeOperation = CANVAS_OPERATIONS.get(view.tool) ?? "source-over";  
 }
 
 /* -****- Painting -****- */
@@ -201,9 +243,9 @@ function flush() {
         q.length = 0;
         return;
     }
-    const msg = { type: "dabs", tool, dabs: q };
+    const msg = { type: "dabs", tool: view.tool, dabs: q };
     ws.send(JSON.stringify(msg));
-    drawDabsLocal(OCTX, q, tool); // local echo
+    drawDabsLocal(OCTX, q, view.tool); // local echo
     q = [];
 }
 // 12 ms batching
@@ -302,8 +344,8 @@ function connect(){
             drawDabsLocal(OCTX, msg.dabs, msg.tool);
         }
         if (msg.type === "debug") {
-            document.getElementById("connection-port").textContent = String(msg.port);
-            document.getElementById("room-id").value = String(msg.room_id);
+            document.getElementById("connectionPort").textContent = String(msg.port);
+            document.getElementById("roomChip").textContent = 'ROOM: ' + (msg.room_id ? msg.room_id : '—');
             return;
         }
     };
