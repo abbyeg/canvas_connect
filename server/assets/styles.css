@@ -18,12 +18,19 @@
   --gap: 10px;
 }
 
+html {
+  padding:0;
+  margin:0;
+}
+
 body {
+  padding: 0px;
+  margin: 0px;
   font: 16px/1.45 var(--font);
   color: var(--ink);
-  margin: 0;
+  background-color: var(--ink);
   height: 100vh;
-  overflow: hidden;
+  /* overflow: hidden; */
   font-size: small;
 }
 
@@ -31,27 +38,32 @@ ul {
   padding-left: 10px;
 }
 
+footer {
+  font-size: 0; /*Prevent whitespace*/
+  display: flex;
+  color: var(--ink);
+}
+
 .app {
   display: grid;
   grid-template-rows: var(--header-h) 1fr 28px;
-  height: 100vh;
+  gap: 2px;
+  height: 100dvh;
 }
 
 .main {
   display: grid;
-  grid-template-columns: var(--toolbar-size) 1fr 320px;
-  gap: var(--gap);
-  padding: var(--gap);
-  max-height: 80vh;
+  height: 100%;
+  min-height: 0;
+  gap: 2px;
+  grid-template-columns: var(--toolbar-size) minmax(0, 1fr) 320px;
 }
 
 .seg { 
   display: inline-flex;
-  border: 2px solid var(--ink);
-  border-radius:12px;
-  overflow:hidden;
-  background:#fffbe1;
-  box-shadow:var(--shadow);
+  overflow: hidden;
+  background: var(--bg);
+  margin-right: 2px;
 }
 
 .seg button { 
@@ -69,40 +81,41 @@ header {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: #fff1b6;
-  border-bottom: 2px solid var(--ink);
-  box-shadow: 0 3px 0 var(--ink);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: #fffbe1;
-  box-shadow:2px 2px 0 var(--ink);
+  padding: 8px;
+  gap: 0px;
+  background-color: var(--bg);
+  margin-right: 2px;
+  font-size: 13px;
+}
+
+.chip.end {
+  margin-right: 0px;
 }
 
 .row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 var(--gap);
   height: var(--header-h);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  padding: 8px;
   font-weight: 800;
   letter-spacing: .02em;
+  background-color: var(--bg);
+  margin-right: 2px;
 }
 
 .grow {
   flex: 1;
+  background-color: var(--bg);
+  margin-right: 2px;
 }
 
 .toolbar {
@@ -111,19 +124,15 @@ header {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  background: #fffdf2;
-  border: 2px solid var(--ink);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--bg);
 }
 
 .stage-wrap {
   position: relative;
   overflow: auto;
-  background: #fffef7;
-  border: 2px solid var(--ink);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--bg);
+  min-height: 0;
+  min-width: 0; 
 }
 
 .workspace {
@@ -167,14 +176,15 @@ header {
   background-color: white;
 }
 
-aside { display:flex; flex-direction:column; gap:var(--gap); }
+aside { 
+  display: flex;
+  flex-direction: column;
+}
 
 .panel {
-  background: #fffdf2;
-  border: 2px solid var(--ink);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--bg);
   padding: 10px;
+  margin-bottom: 2px;
 }
 
 .panel h3 {
@@ -185,20 +195,21 @@ aside { display:flex; flex-direction:column; gap:var(--gap); }
   color: var(--ink);
 }
 
+.panel.grow {
+  margin-bottom: 0px;
+  margin-right: 0px;
+}
+
 .rowx {
-  display:flex;
-  align-items:center;
-  gap:8px;
+  display: flex;
+  gap: 8px;
 }
 
 .color-swatch {
   width: 22px;
   height: 22px;
-  border-radius: 6px;
   border: 2px solid var(--ink);
   cursor: pointer;
-  box-shadow: 2px 2px 0 var(--ink);
-}
 
 .slider {
   appearance: none;
@@ -220,17 +231,6 @@ aside { display:flex; flex-direction:column; gap:var(--gap); }
   cursor: pointer;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: #fffbe1;
-  box-shadow: 2px 2px 0 var(--ink);
-}
-
 .avatar {
   width: 18px;
   height: 18px;
@@ -238,24 +238,6 @@ aside { display:flex; flex-direction:column; gap:var(--gap); }
   background: linear-gradient(180deg,#ffeeb3,#fff);
 }
 
-footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 8px;
-  border-top: 2px solid var(--ink);
-  color:var(--ink);
-  font-size: 13px;
-  background: #fff0b0
-}
-
-.pill {
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 2px solid var(--ink);
-  background: #fffbe1;
-  box-shadow: 2px 2px 0 var(--ink);
-}
 
 .ok {
   background: #e7fadf;

@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -21,28 +22,28 @@
         
         <div class="grow"></div>
         <div class="chip" title="Room"><span id="roomChip">ROOM: —</span></div>
-        <div class="chip" title="Me"><span class="avatar"></span><span id="user">Anonymous</span></div>
+        <div class="chip end" title="Me"><span class="avatar"></span><span id="user">Anonymous</span></div>
     </header>
 
     <main class="main">
       <nav class="toolbar" aria-label="Tools">
         <button class="tool" id="t_brush" aria-pressed="true" title="Brush (B)" data-tool="brush" aria-label="Brush">
-          <img src="pencil-edit-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+          <img src="icons/pencil-edit-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
         </button>
         <button class="tool" id="t_eraser" aria-pressed="false" title="Eraser (E)" data-tool="eraser" aria-label="Eraser" onclick="setMode(1)"">
-         <img src="eraser-svgrepo-com.svg"  width="22" height="22" /> 
+         <img src="icons/eraser-svgrepo-com.svg"  width="22" height="22" /> 
         </button>
         <button class="tool" id="t_hand" aria-pressed="false" title="Hand/Pan (Space)" data-tool="hand" aria-label="Hand">
-          <img src="pan-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+          <img src="icons/pan-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
         </button>
         <button class="tool" id="t_zoom" aria-pressed="false" title="Zoom (Z)" data-tool="zoom" aria-label="Zoom">
-          <img src="magnifying-glass-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+          <img src="icons/magnifying-glass-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
         </button>
         <button class="tool" id="t_undo" aria-pressed="false" title="Undo (Ctrl/Cmd+Z)" data-tool="undo" aria-label="Undo">
-          <img src="undo-svgrepo-com.svg" width="22" height="22" onclick="setMode(0)"/>
+          <img src="icons/undo-svgrepo-com.svg" width="22" height="22" onclick="setMode(0)"/>
         </button>
         <button class="tool" id="t_clear" aria-pressed="false" title="Clear (Shift+N)" data-tool="clear" aria-label="Clear">
-          <img src="clear-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
+          <img src="icons/clear-svgrepo-com.svg"  width="22" height="22" onclick="setMode(0)"/>
         </button>
       </nav>
       
@@ -63,17 +64,19 @@
           <div class="rowx" style="flex-wrap:wrap; gap:8px" id="palette"></div>
           <div style="margin-top:8px" class="rowx"><input id="color" type="color" class="input" value="#222222" /></div>
         </div>
+        <div class="panel grow">
+        </div>
       </aside>
 
     </main>
 
     <footer>
-      <span id="coord">x:0 y:0</span>
-      <span id="zoomLabel" class="pill">100%</span>
-      <span id="status" class="pill warn">offline demo</span>
-      <span id="connectionPort" class="pill">-</span>
-      <span class="grow"></span>
-      <span class="pill">Brush <span id="brushLabel">6px #222</span></span>
+      <span id="coord" class="chip" style="min-width: 85px;">x:0 y:0</span>
+      <span id="zoomLabel" class="chip">100%</span>
+      <span id="status" class="chip">offline demo</span>
+      <span id="connectionPort" class="chip">-</span>
+      <span class="grow" class="chip"></span>
+      <span class="chip">Brush <span id="brushLabel">6px #222</span></span>
     </footer>
 
   </div>
